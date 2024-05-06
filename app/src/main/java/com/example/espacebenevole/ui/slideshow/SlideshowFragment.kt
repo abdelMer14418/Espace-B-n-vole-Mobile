@@ -52,7 +52,7 @@ class SlideshowFragment : Fragment() {
         val description = binding.editTextDescription.text?.toString()?.trim()
 
         if (title.isNullOrEmpty() || description.isNullOrEmpty()) {
-            Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Veuillez remplir tous les champs!", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -73,7 +73,7 @@ class SlideshowFragment : Fragment() {
                 fetchTickets()
             },
             Response.ErrorListener { error ->
-                Toast.makeText(context, "Failed to submit ticket: ${error.toString()}", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "Echec d'envoi du ticket!", Toast.LENGTH_LONG).show()
             }
         ) {
             override fun getHeaders(): Map<String, String> {
@@ -116,7 +116,7 @@ class SlideshowFragment : Fragment() {
                 binding.recyclerViewTickets.adapter = TicketsAdapter(ticketsList)
             },
             Response.ErrorListener { error ->
-                Toast.makeText(context, "Failed to fetch tickets: ${error.toString()}", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "Erreur lors de la récupération des tickets!", Toast.LENGTH_LONG).show()
             }
         ) {
             override fun getHeaders(): Map<String, String> {

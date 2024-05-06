@@ -21,11 +21,8 @@ import com.prolificinteractive.materialcalendarview.DayViewDecorator
 import com.prolificinteractive.materialcalendarview.DayViewFacade
 import com.prolificinteractive.materialcalendarview.spans.DotSpan
 import org.json.JSONArray
-import org.json.JSONException
-import org.threeten.bp.DateTimeException
 import org.threeten.bp.LocalDate
 import org.threeten.bp.LocalDateTime
-import org.threeten.bp.YearMonth
 import org.threeten.bp.format.DateTimeFormatter
 import org.threeten.bp.format.DateTimeParseException
 
@@ -46,6 +43,7 @@ class GalleryFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         fetchEvents()
         setupCalendarClickListener()
     }
@@ -64,12 +62,12 @@ class GalleryFragment : Fragment() {
             Response.Listener<String> { response ->
                 val eventsArray = JSONArray(response)
                 eventsList = eventsArray.toEventList()
-                Log.d("GalleryFragment", "Events loaded: ${eventsList.size}")
-                Toast.makeText(context, "Events loaded", Toast.LENGTH_LONG).show()
+                //.d("GalleryFragment", "Events loaded: ${eventsList.size}")
+                //Toast.makeText(context, "Events loaded", Toast.LENGTH_LONG).show()
                 updateCalendar(eventsList)
             },
             Response.ErrorListener { error ->
-                Toast.makeText(context, "Failed to fetch events: ${error.toString()}", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "Erreur lors de la récupération de votre planning!", Toast.LENGTH_LONG).show()
             }
         ) {
             override fun getHeaders(): Map<String, String> {
@@ -129,20 +127,20 @@ class GalleryFragment : Fragment() {
         if (eventsOnThisDay.isNotEmpty()) {
             showEventDetailsDialog(eventsOnThisDay)
         } else {
-            Toast.makeText(context, "No events on this day.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Pas d'évènement à cette date!", Toast.LENGTH_SHORT).show()
         }
     }
 
 
     private fun showEventDetailsDialog(events: List<Event>) {
         val eventDetails = events.joinToString(separator = "\n\n") { event ->
-            "Title: ${event.title}\nStart: ${event.startDate}\nEnd: ${event.endDate}\nAddress: ${event.address}"
+            "Titre: ${event.title}\nDébut: ${event.startDate}\nFin: ${event.endDate}\nAdresse: ${event.address}"
         }
 
         AlertDialog.Builder(requireContext())
-            .setTitle("Event Details")
+            .setTitle("Détails")
             .setMessage(eventDetails)
-            .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
+            .setPositiveButton("Fermer") { dialog, _ -> dialog.dismiss() }
             .create()
             .show()
     }

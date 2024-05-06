@@ -58,7 +58,6 @@ class HomeFragment : Fragment() {
     }
 
     private fun checkAuthenticationAndFetchEvents() {
-        Toast.makeText(context, "HEEEEY", Toast.LENGTH_SHORT).show()
         val token = getToken()
         if (token.isNullOrEmpty()) {
             redirectToLogin()
@@ -73,7 +72,7 @@ class HomeFragment : Fragment() {
     }
 
     private fun redirectToLogin() {
-        Toast.makeText(requireContext(), "Please log in again.", Toast.LENGTH_LONG).show()
+        Toast.makeText(requireContext(), "Votre session s'est expirée, veuillez vous reconnecter!", Toast.LENGTH_LONG).show()
         // Handle redirection to login; possibly via Navigation Component or starting a new Activity
     }
 
@@ -94,7 +93,7 @@ class HomeFragment : Fragment() {
                         updateEventsPage(publicEvents, registeredEvents)
                     },
                     Response.ErrorListener { error ->
-                        Toast.makeText(requireContext(), "Failed to fetch registered events: ${error.message}", Toast.LENGTH_LONG).show()
+                        Toast.makeText(requireContext(), "Erreur lors de la récupération des évènements dans les quelles vous etes inscrits!", Toast.LENGTH_LONG).show()
                     }) {
                     override fun getHeaders(): Map<String, String> {
                         return mapOf("auth" to token)
@@ -103,7 +102,7 @@ class HomeFragment : Fragment() {
                 queue.add(registeredEventsRequest)
             },
             Response.ErrorListener { error ->
-                Toast.makeText(requireContext(), "Failed to fetch public events: ${error.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), "Erreur de la récupération des évènements disponibles!", Toast.LENGTH_LONG).show()
             }
         )
         queue.add(publicEventsRequest)
@@ -152,7 +151,7 @@ class HomeFragment : Fragment() {
                 Toast.makeText(context, "Enregistrement bien accompli!", Toast.LENGTH_SHORT).show()
             },
             Response.ErrorListener { error ->
-                Toast.makeText(context, "Erreur lors de l'enregistrement: ${error.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Erreur lors de l'enregistrement!", Toast.LENGTH_SHORT).show()
             }
         ) {
             override fun getHeaders(): Map<String, String> {
