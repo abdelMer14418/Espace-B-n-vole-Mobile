@@ -58,6 +58,7 @@ class HomeFragment : Fragment() {
     }
 
     private fun checkAuthenticationAndFetchEvents() {
+        Toast.makeText(context, "HEEEEY", Toast.LENGTH_SHORT).show()
         val token = getToken()
         if (token.isNullOrEmpty()) {
             redirectToLogin()
