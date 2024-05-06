@@ -46,7 +46,7 @@ class GalleryFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        fetchEvents2()
+        fetchEvents()
         setupCalendarClickListener()
     }
 
@@ -55,7 +55,7 @@ class GalleryFragment : Fragment() {
         _binding = null
     }
 
-    /*private fun fetchEvents() {
+    private fun fetchEvents() {
         val queue = Volley.newRequestQueue(context)
         val url = "https://projet-annuel-paoli.koyeb.app/api/index.php/volunteer/planning"
 
@@ -63,8 +63,9 @@ class GalleryFragment : Fragment() {
             Request.Method.GET, url,
             Response.Listener<String> { response ->
                 val eventsArray = JSONArray(response)
-                val eventsList = eventsArray.toEventList()
-                Toast.makeText(context, response, Toast.LENGTH_LONG).show()
+                eventsList = eventsArray.toEventList()
+                Log.d("GalleryFragment", "Events loaded: ${eventsList.size}")
+                Toast.makeText(context, "Events loaded", Toast.LENGTH_LONG).show()
                 updateCalendar(eventsList)
             },
             Response.ErrorListener { error ->
@@ -78,9 +79,10 @@ class GalleryFragment : Fragment() {
             }
         }
         queue.add(stringRequest)
-    }*/
+    }
 
-    private fun fetchEvents2() {
+
+    /*private fun fetchEvents2() {
         val jsonData = """
         [
             {
@@ -107,7 +109,7 @@ class GalleryFragment : Fragment() {
         } catch (e: JSONException) {
             Toast.makeText(context, "Failed to parse JSON data: ${e.toString()}", Toast.LENGTH_LONG).show()
         }
-    }
+    }*/
 
     private fun setupCalendarClickListener() {
         binding.calendarView.setOnDateChangedListener { widget, date, selected ->
