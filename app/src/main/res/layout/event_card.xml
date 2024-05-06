@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="4dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/activityName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Nom de l'activité"
+            android:textAppearance="?attr/textAppearanceHeadline6"
+            android:textColor="?attr/colorPrimary"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:id="@+id/activityStart"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Début: "
+            android:textAppearance="?attr/textAppearanceBody1"/>
+
+        <TextView
+            android:id="@+id/activityEnd"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Fin: "
+            android:textAppearance="?attr/textAppearanceBody1"/>
+
+        <TextView
+            android:id="@+id/activityLocation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Lieu: "
+            android:textAppearance="?attr/textAppearanceBody1"/>
+
+        <Button
+            android:id="@+id/buttonParticipate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Participer"
+            android:layout_marginTop="16dp"
+            android:backgroundTint="@color/pistachio"
+            android:textColor="@android:color/white"/>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>
