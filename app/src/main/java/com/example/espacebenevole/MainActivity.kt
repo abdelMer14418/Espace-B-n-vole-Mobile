@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.snackbar.Snackbar
@@ -15,8 +16,13 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import androidx.drawerlayout.widget.DrawerLayout
+import com.android.volley.Request
+import com.android.volley.Response
+import com.android.volley.toolbox.StringRequest
+import com.android.volley.toolbox.Volley
 import com.example.espacebenevole.databinding.ActivityMainBinding
 import com.jakewharton.threetenabp.AndroidThreeTen
+import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
 
@@ -26,6 +32,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AndroidThreeTen.init(this)
+        fetchUserDetails()
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -50,6 +57,40 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
     }
+    private fun fetchUserDetails() {
+        val queue = Volley.newRequestQueue(this)
+        val url = "https://projet-annuel-paoli.koyeb.app/api/index.php/volunteer/account"
+
+        val stringRequest = object : StringRequest(
+            Request.Method.GET, url,
+            Response.Listener<String> { response ->
+                try {
+                    val responseObject = JSONObject(response)
+                    val fullName = "${responseObject.getString("firstName")} ${responseObject.getString("lastName")}"
+                    updateFullName(fullName)
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Erreur lors du traitement des données utilisateur.", Toast.LENGTH_LONG).show()
+                }
+            },
+            Response.ErrorListener {
+                Toast.makeText(this, "Erreur lors de la récupération des informations de l'utilisateur!", Toast.LENGTH_LONG).show()
+            }
+        ) {
+            override fun getHeaders(): Map<String, String> {
+                val sharedPreferences = getSharedPreferences("AppPreferences", MODE_PRIVATE)
+                val token = sharedPreferences.getString("AuthToken", "")
+                return mapOf("auth" to token!!, "Content-Type" to "application/json")
+            }
+        }
+        queue.add(stringRequest)
+    }
+
+    private fun updateFullName(fullName: String) {
+        val headerView = binding.navView.getHeaderView(0)
+        val textViewUserFullName = headerView.findViewById<TextView>(R.id.textViewUserFullName)
+        textViewUserFullName.text = fullName
+    }
+
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.main, menu)
