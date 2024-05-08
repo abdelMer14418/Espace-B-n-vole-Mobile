@@ -22,4 +22,10 @@
         android:name="com.example.espacebenevole.ui.slideshow.SlideshowFragment"
         android:label="Tickets"
         tools:layout="@layout/fragment_slideshow" />
+
+    <fragment
+        android:id="@+id/nav_nfc"
+        android:name="com.example.espacebenevole.ui.nfc.NFCFragment"
+        android:label="NFC"
+        tools:layout="@layout/fragment_nfc" />
 </navigation>
