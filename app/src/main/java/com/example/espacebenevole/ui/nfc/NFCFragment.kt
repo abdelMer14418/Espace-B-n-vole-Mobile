@@ -42,7 +42,9 @@ class NFCFragment : Fragment(), NfcAdapter.ReaderCallback {
         nfcAdapter = NfcAdapter.getDefaultAdapter(context)
         if (nfcAdapter == null) {
             Toast.makeText(context, "NFC is not supported on this device.", Toast.LENGTH_LONG).show()
-        } else if (!nfcAdapter!!.isEnabled) {
+            return
+        }
+        if (!nfcAdapter!!.isEnabled) {
             Toast.makeText(context, "NFC is disabled.", Toast.LENGTH_LONG).show()
         }
     }
@@ -59,12 +61,13 @@ class NFCFragment : Fragment(), NfcAdapter.ReaderCallback {
 
     override fun onTagDiscovered(tag: Tag?) {
         lastDetectedTag = tag
-        // Handle any additional tag discovery logic if necessary
+        // Additional logic can be added here if needed
     }
 
     private fun writeIdToTag(tag: Tag?, id: String) {
         if (tag == null) {
-            Toast.makeText(context, "No NFC tag detected.", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "No NFC tag detected. Please approach a tag and try again.", Toast.LENGTH_LONG).show()
+            lastDetectedTag = null // Clear the last detected tag to prevent retries on an invalid tag
             return
         }
 
@@ -75,16 +78,21 @@ class NFCFragment : Fragment(), NfcAdapter.ReaderCallback {
         }
 
         nfcData.use { ndef ->
-            ndef.connect()
-            if (ndef.isWritable) {
-                val record = NdefRecord.createTextRecord("en", id)
-                val message = NdefMessage(arrayOf(record))
-                ndef.writeNdefMessage(message)
-                Toast.makeText(context, "ID written to tag successfully: $id", Toast.LENGTH_LONG).show()
-            } else {
-                Toast.makeText(context, "NFC tag is read-only.", Toast.LENGTH_LONG).show()
+            try {
+                ndef.connect()
+                if (ndef.isWritable) {
+                    val record = NdefRecord.createTextRecord("en", id)
+                    val message = NdefMessage(arrayOf(record))
+                    ndef.writeNdefMessage(message)
+                    Toast.makeText(context, "ID written to tag successfully: $id", Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(context, "NFC tag is read-only.", Toast.LENGTH_LONG).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "Failed to write to NFC tag: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+            } finally {
+                ndef.close()
             }
-            ndef.close()
         }
     }
 
