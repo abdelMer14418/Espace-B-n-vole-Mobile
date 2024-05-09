@@ -1,6 +1,7 @@
 package com.example.espacebenevole.ui.home
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,9 +12,11 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.android.volley.Request
 import com.android.volley.Response
+import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import com.example.espacebenevole.LoginActivity
 import com.example.espacebenevole.R
 import com.example.espacebenevole.databinding.FragmentHomeBinding
 import org.json.JSONArray
@@ -74,6 +77,17 @@ class HomeFragment : Fragment() {
     private fun redirectToLogin() {
         Toast.makeText(requireContext(), "Votre session s'est expirée, veuillez vous reconnecter!", Toast.LENGTH_LONG).show()
         // Handle redirection to login; possibly via Navigation Component or starting a new Activity
+        val intent = Intent(activity, LoginActivity::class.java)
+        startActivity(intent)
+        activity?.finish()
+    }
+
+    private fun handleVolleyError(error: VolleyError) {
+        if (error.networkResponse?.statusCode == 401) {
+            redirectToLogin()
+        } else {
+            Toast.makeText(context, "Erreur réseau: ${error.message}", Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun fetchAndDisplayEvents(token: String) {
@@ -93,7 +107,7 @@ class HomeFragment : Fragment() {
                         updateEventsPage(publicEvents, registeredEvents)
                     },
                     Response.ErrorListener { error ->
-                        Toast.makeText(requireContext(), "Erreur lors de la récupération des évènements dans les quelles vous etes inscrits!", Toast.LENGTH_LONG).show()
+                        handleVolleyError(error)
                     }) {
                     override fun getHeaders(): Map<String, String> {
                         return mapOf("auth" to token)
@@ -102,12 +116,11 @@ class HomeFragment : Fragment() {
                 queue.add(registeredEventsRequest)
             },
             Response.ErrorListener { error ->
-                Toast.makeText(requireContext(), "Erreur de la récupération des évènements disponibles!", Toast.LENGTH_LONG).show()
+                handleVolleyError(error)
             }
         )
         queue.add(publicEventsRequest)
     }
-
 
     private fun updateEventsPage(publicEvents: List<Event>?, registeredEvents: List<Event>?) {
         val container = binding.eventsContainer
@@ -151,7 +164,7 @@ class HomeFragment : Fragment() {
                 Toast.makeText(context, "Enregistrement bien accompli!", Toast.LENGTH_SHORT).show()
             },
             Response.ErrorListener { error ->
-                Toast.makeText(context, "Erreur lors de l'enregistrement!", Toast.LENGTH_SHORT).show()
+                handleVolleyError(error)
             }
         ) {
             override fun getHeaders(): Map<String, String> {
@@ -160,7 +173,6 @@ class HomeFragment : Fragment() {
         }
         Volley.newRequestQueue(context).add(stringRequest)
     }
-
 
     override fun onDestroyView() {
         super.onDestroyView()
