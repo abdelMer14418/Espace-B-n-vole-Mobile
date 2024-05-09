@@ -8,6 +8,7 @@ import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.Ndef
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -21,6 +22,7 @@ import com.android.volley.toolbox.Volley
 import com.example.espacebenevole.LoginActivity
 import com.example.espacebenevole.databinding.FragmentNfcBinding
 import org.json.JSONObject
+import java.util.Arrays
 
 class NFCFragment : Fragment(), NfcAdapter.ReaderCallback {
 
@@ -36,9 +38,15 @@ class NFCFragment : Fragment(), NfcAdapter.ReaderCallback {
         _binding = FragmentNfcBinding.inflate(inflater, container, false)
         initNFC()
         checkAuthentication()
-        binding.writeButton.setOnClickListener {
-            writeIdToTag(lastDetectedTag, "1") // ID fixé à 1
-        }
+
+        // Configure the visibility of EditText and Button
+        // Comment or uncomment the following lines for version switching
+        binding.editTextBeneficiaryId.visibility = View.GONE // Change to View.VISIBLE for the write version
+        binding.writeButton.visibility = View.GONE // Change to View.VISIBLE for the write version
+
+        // Comment or uncomment the following line to enable setup for write mode
+        //setupWriteButton()
+
         return binding.root
     }
 
@@ -57,6 +65,41 @@ class NFCFragment : Fragment(), NfcAdapter.ReaderCallback {
         }
     }
 
+    private fun setupWriteButton() {
+        binding.writeButton.setOnClickListener {
+            val beneficiaryId = binding.editTextBeneficiaryId.text.toString()
+            if (beneficiaryId.isNotEmpty()) {
+                lastDetectedTag?.let { tag ->
+                    writeIdToTag(tag, beneficiaryId)
+                } ?: Toast.makeText(context, "Aucun tag NFC détecté.", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(context, "Veuillez entrer un ID valide !", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun writeIdToTag(tag: Tag?, id: String) {
+        if (tag == null) {
+            Toast.makeText(context, "Aucun tag NFC détecté. Veuillez approcher un tag et réessayer.", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        val nfcData = Ndef.get(tag)
+        nfcData?.use { ndef ->
+            try {
+                ndef.connect()
+                val record = NdefRecord.createTextRecord("en", id)
+                val message = NdefMessage(arrayOf(record))
+                ndef.writeNdefMessage(message)
+                Toast.makeText(context, "ID écrit sur le tag NFC : $id", Toast.LENGTH_LONG).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, "Échec de l'écriture sur le tag NFC : ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+            } finally {
+                ndef.close()
+            }
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         nfcAdapter?.enableReaderMode(activity, this, NfcAdapter.FLAG_READER_NFC_A or NfcAdapter.FLAG_READER_NFC_B, null)
@@ -69,30 +112,39 @@ class NFCFragment : Fragment(), NfcAdapter.ReaderCallback {
 
     override fun onTagDiscovered(tag: Tag?) {
         lastDetectedTag = tag
+        // Uncomment the following line for the version that reads and sends requests automatically
+         sendRequestIfIdFound(tag)
     }
 
-    private fun writeIdToTag(tag: Tag?, fixedId: String = "1") {
-        if (tag == null) {
-            Toast.makeText(context, "Aucun tag NFC détecté. Veuillez approcher un tag et réessayer.", Toast.LENGTH_LONG).show()
-            return
-        }
-
-        val nfcData = Ndef.get(tag)
-        nfcData?.use { ndef ->
-            try {
-                ndef.connect()
-                if (ndef.isWritable) {
-                    val record = NdefRecord.createTextRecord("en", fixedId)
-                    val message = NdefMessage(arrayOf(record))
-                    ndef.writeNdefMessage(message)
-                    sendVisitRegistration(fixedId)
-                } else {
-                    Toast.makeText(context, "Le tag NFC est en lecture seule.", Toast.LENGTH_LONG).show()
+    private fun readIdFromTag(tag: Tag): String? {
+        val ndef = Ndef.get(tag)
+        ndef?.connect()
+        try {
+            val message = ndef?.ndefMessage
+            if (message != null && message.records.isNotEmpty()) {
+                val record = message.records[0]
+                if (record.tnf == NdefRecord.TNF_WELL_KNOWN && Arrays.equals(record.type, NdefRecord.RTD_TEXT)) {
+                    val payload = record.payload
+                    val languageCodeLength = payload[0].toInt() and 0x3F // Get the language code length
+                    return String(payload, languageCodeLength + 1, payload.size - languageCodeLength - 1, Charsets.UTF_8)
                 }
-            } catch (e: Exception) {
-                Toast.makeText(context, "Échec de l'écriture sur le tag NFC : ${e.localizedMessage}", Toast.LENGTH_LONG).show()
-            } finally {
-                ndef.close()
+            }
+        } catch (e: Exception) {
+            Toast.makeText(context, "Erreur lors de la lecture du tag NFC: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+        } finally {
+            ndef?.close()
+        }
+        return null
+    }
+
+
+    private fun sendRequestIfIdFound(tag: Tag?) {
+        tag?.let {
+            val id = readIdFromTag(it)
+            if (id != null) {
+                sendVisitRegistration(id)
+            } else {
+                Toast.makeText(context, "ID non trouvé sur le jeton NFC.", Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -111,10 +163,17 @@ class NFCFragment : Fragment(), NfcAdapter.ReaderCallback {
             put("id", beneficiaryId)
         }
 
+        //val requestBody = jsonBody.toString()
+
+
+        //Log.d("NFCFragment", "Sending POST request body: $requestBody")
+
+
+
         val stringRequest = object : StringRequest(
             Request.Method.POST, url,
             Response.Listener<String> {
-                Toast.makeText(context, "Visite bien enregistrée!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Visite ajoutée au bénévole dont l'ID est :  $beneficiaryId.", Toast.LENGTH_SHORT).show()
             },
             Response.ErrorListener {
                 handleVolleyError(it)
