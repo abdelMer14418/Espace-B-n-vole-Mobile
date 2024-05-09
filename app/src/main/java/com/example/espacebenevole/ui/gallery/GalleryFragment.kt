@@ -75,6 +75,35 @@ class GalleryFragment : Fragment() {
         activity?.finish()
     }
 
+    /*private fun fetchEvents2() {
+        val jsonData = """
+        [
+            {
+                "id": 1,
+                "title": "Charity Bake Sale",
+                "startDate": "2024-09-10 08:00:00",
+                "endDate": "2024-09-12 12:00:00",
+                "address": "123 Cupcake Way"
+            },
+            {
+                "id": 2,
+                "title": "Book Drive",
+                "startDate": "2024-12-10 09:00:00",
+                "endDate": "2024-12-12 15:00:00",
+                "address": "456 Library Ave"
+            }
+        ]
+        """
+        try {
+            val eventsArray = JSONArray(jsonData)
+            eventsList = eventsArray.toEventList()
+            Toast.makeText(context, "Events loaded from JSON.", Toast.LENGTH_LONG).show()
+            updateCalendar(eventsList)
+        } catch (e: JSONException) {
+            Toast.makeText(context, "Failed to parse JSON data: ${e.toString()}", Toast.LENGTH_LONG).show()
+        }
+    }*/
+
     private fun fetchEvents(token: String) {
         val queue = Volley.newRequestQueue(context)
         val url = "https://projet-annuel-paoli.koyeb.app/api/index.php/volunteer/planning"
@@ -189,31 +218,3 @@ class GalleryFragment : Fragment() {
         return list
     }
 }
-/*private fun fetchEvents2() {
-        val jsonData = """
-        [
-            {
-                "id": 1,
-                "title": "Charity Bake Sale",
-                "startDate": "2024-09-10 08:00:00",
-                "endDate": "2024-09-12 12:00:00",
-                "address": "123 Cupcake Way"
-            },
-            {
-                "id": 2,
-                "title": "Book Drive",
-                "startDate": "2024-12-10 09:00:00",
-                "endDate": "2024-12-12 15:00:00",
-                "address": "456 Library Ave"
-            }
-        ]
-        """
-        try {
-            val eventsArray = JSONArray(jsonData)
-            eventsList = eventsArray.toEventList()
-            Toast.makeText(context, "Events loaded from JSON.", Toast.LENGTH_LONG).show()
-            updateCalendar(eventsList)
-        } catch (e: JSONException) {
-            Toast.makeText(context, "Failed to parse JSON data: ${e.toString()}", Toast.LENGTH_LONG).show()
-        }
-    }*/

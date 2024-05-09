@@ -1,6 +1,7 @@
 package com.example.espacebenevole.ui.nfc
 
 import android.content.Context
+import android.content.Intent
 import android.nfc.NdefMessage
 import android.nfc.NdefRecord
 import android.nfc.NfcAdapter
@@ -14,8 +15,10 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.android.volley.Request
 import com.android.volley.Response
+import com.android.volley.VolleyError
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import com.example.espacebenevole.LoginActivity
 import com.example.espacebenevole.databinding.FragmentNfcBinding
 import org.json.JSONObject
 
@@ -32,6 +35,7 @@ class NFCFragment : Fragment(), NfcAdapter.ReaderCallback {
     ): View {
         _binding = FragmentNfcBinding.inflate(inflater, container, false)
         initNFC()
+        checkAuthentication()
         binding.writeButton.setOnClickListener {
             val beneficiaryId = binding.editTextBeneficiaryId.text.toString()
             if (beneficiaryId.isNotEmpty()) {
@@ -49,6 +53,12 @@ class NFCFragment : Fragment(), NfcAdapter.ReaderCallback {
             Toast.makeText(context, "Le NFC n'est pas pris en charge sur cet appareil.", Toast.LENGTH_LONG).show()
         } else if (!nfcAdapter!!.isEnabled) {
             Toast.makeText(context, "Le NFC est désactivé.", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun checkAuthentication() {
+        if (getToken().isNullOrEmpty()) {
+            redirectToLogin()
         }
     }
 
@@ -94,6 +104,12 @@ class NFCFragment : Fragment(), NfcAdapter.ReaderCallback {
     }
 
     private fun sendVisitRegistration(beneficiaryId: String) {
+        val token = getToken()
+        if (token.isNullOrEmpty()) {
+            redirectToLogin()
+            return
+        }
+
         val queue = Volley.newRequestQueue(context)
         val url = "https://projet-annuel-paoli.koyeb.app/api/index.php/volunteer/visits"
 
@@ -107,13 +123,11 @@ class NFCFragment : Fragment(), NfcAdapter.ReaderCallback {
                 Toast.makeText(context, "Visite bien enregistrée!", Toast.LENGTH_SHORT).show()
             },
             Response.ErrorListener {
-                Toast.makeText(context, "Erreur d'enregistrement de la visite!", Toast.LENGTH_LONG).show()
+                handleVolleyError(it)
             }
         ) {
             override fun getHeaders(): Map<String, String> {
-                val sharedPreferences = requireActivity().getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
-                val token = sharedPreferences.getString("AuthToken", "")
-                return mapOf("auth" to token!!, "Content-Type" to "application/json")
+                return mapOf("auth" to token, "Content-Type" to "application/json")
             }
 
             override fun getBodyContentType(): String {
@@ -125,6 +139,26 @@ class NFCFragment : Fragment(), NfcAdapter.ReaderCallback {
             }
         }
         queue.add(stringRequest)
+    }
+
+    private fun getToken(): String? {
+        val sharedPreferences = requireActivity().getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+        return sharedPreferences.getString("AuthToken", null)
+    }
+
+    private fun redirectToLogin() {
+        Toast.makeText(requireContext(), "Votre session s'est expirée, veuillez vous reconnecter!", Toast.LENGTH_LONG).show()
+        val intent = Intent(activity, LoginActivity::class.java)
+        startActivity(intent)
+        activity?.finish()
+    }
+
+    private fun handleVolleyError(error: VolleyError) {
+        if (error.networkResponse?.statusCode == 401) {
+            redirectToLogin()
+        } else {
+            Toast.makeText(context, "Erreur réseau: ${error.message}", Toast.LENGTH_LONG).show()
+        }
     }
 
     override fun onDestroyView() {
