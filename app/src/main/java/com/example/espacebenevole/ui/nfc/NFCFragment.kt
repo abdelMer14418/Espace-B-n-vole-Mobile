@@ -37,12 +37,7 @@ class NFCFragment : Fragment(), NfcAdapter.ReaderCallback {
         initNFC()
         checkAuthentication()
         binding.writeButton.setOnClickListener {
-            val beneficiaryId = binding.editTextBeneficiaryId.text.toString()
-            if (beneficiaryId.isNotEmpty()) {
-                writeIdToTag(lastDetectedTag, beneficiaryId)
-            } else {
-                Toast.makeText(context, "Veuillez entrer un ID valide !", Toast.LENGTH_SHORT).show()
-            }
+            writeIdToTag(lastDetectedTag, "1") // ID fixé à 1
         }
         return binding.root
     }
@@ -76,10 +71,9 @@ class NFCFragment : Fragment(), NfcAdapter.ReaderCallback {
         lastDetectedTag = tag
     }
 
-    private fun writeIdToTag(tag: Tag?, id: String) {
+    private fun writeIdToTag(tag: Tag?, fixedId: String = "1") {
         if (tag == null) {
             Toast.makeText(context, "Aucun tag NFC détecté. Veuillez approcher un tag et réessayer.", Toast.LENGTH_LONG).show()
-            lastDetectedTag = null
             return
         }
 
@@ -88,10 +82,10 @@ class NFCFragment : Fragment(), NfcAdapter.ReaderCallback {
             try {
                 ndef.connect()
                 if (ndef.isWritable) {
-                    val record = NdefRecord.createTextRecord("en", id)
+                    val record = NdefRecord.createTextRecord("en", fixedId)
                     val message = NdefMessage(arrayOf(record))
                     ndef.writeNdefMessage(message)
-                    sendVisitRegistration(id)
+                    sendVisitRegistration(fixedId)
                 } else {
                     Toast.makeText(context, "Le tag NFC est en lecture seule.", Toast.LENGTH_LONG).show()
                 }
