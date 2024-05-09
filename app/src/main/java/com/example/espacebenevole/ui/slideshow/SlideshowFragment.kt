@@ -1,5 +1,6 @@
 package com.example.espacebenevole.ui.slideshow
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -10,8 +11,11 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.android.volley.Request
 import com.android.volley.Response
+import com.android.volley.VolleyError
+import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import com.example.espacebenevole.LoginActivity
 import com.example.espacebenevole.databinding.FragmentSlideshowBinding
 import com.example.espacebenevole.Ticket
 import com.example.espacebenevole.TicketsAdapter
@@ -39,12 +43,33 @@ class SlideshowFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        fetchTickets()
+        checkAuthenticationAndFetchTickets()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    private fun checkAuthenticationAndFetchTickets() {
+        val token = getToken()
+        if (token.isNullOrEmpty()) {
+            redirectToLogin()
+        } else {
+            fetchTickets(token)
+        }
+    }
+
+    private fun getToken(): String? {
+        val sharedPreferences = requireActivity().getSharedPreferences("AppPreferences", AppCompatActivity.MODE_PRIVATE)
+        return sharedPreferences.getString("AuthToken", null)
+    }
+
+    private fun redirectToLogin() {
+        Toast.makeText(requireContext(), "Votre session s'est expirée, veuillez vous reconnecter!", Toast.LENGTH_LONG).show()
+        val intent = Intent(activity, LoginActivity::class.java)
+        startActivity(intent)
+        activity?.finish()
     }
 
     private fun submitTicket() {
@@ -53,6 +78,12 @@ class SlideshowFragment : Fragment() {
 
         if (title.isNullOrEmpty() || description.isNullOrEmpty()) {
             Toast.makeText(context, "Veuillez remplir tous les champs!", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val token = getToken()
+        if (token.isNullOrEmpty()) {
+            redirectToLogin()
             return
         }
 
@@ -67,19 +98,17 @@ class SlideshowFragment : Fragment() {
         val stringRequest = object : StringRequest(
             Request.Method.POST, url,
             Response.Listener<String> { response ->
-                Toast.makeText(context, "Ticket envoyé par succés!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Ticket envoyé avec succès!", Toast.LENGTH_SHORT).show()
                 binding.editTextTitle.text?.clear()
                 binding.editTextDescription.text?.clear()
-                fetchTickets()
+                fetchTickets(token)
             },
             Response.ErrorListener { error ->
-                Toast.makeText(context, "Echec d'envoi du ticket!", Toast.LENGTH_LONG).show()
+                handleVolleyError(error)
             }
         ) {
             override fun getHeaders(): Map<String, String> {
-                val sharedPreferences = requireActivity().getSharedPreferences("AppPreferences", AppCompatActivity.MODE_PRIVATE)
-                val token = sharedPreferences.getString("AuthToken", "")
-                return mapOf("auth" to token!!, "Content-Type" to "application/json")
+                return mapOf("auth" to token, "Content-Type" to "application/json")
             }
 
             override fun getBodyContentType(): String {
@@ -93,38 +122,42 @@ class SlideshowFragment : Fragment() {
         queue.add(stringRequest)
     }
 
-
-
-    private fun fetchTickets() {
+    private fun fetchTickets(token: String) {
         val queue = Volley.newRequestQueue(context)
         val url = "https://projet-annuel-paoli.koyeb.app/api/index.php/volunteer/tickets"
 
-        val jsonArrayRequest = object : StringRequest(
-            Request.Method.GET, url,
-            Response.Listener<String> { response ->
-                val ticketsArray = JSONArray(response)
-                val ticketsList = ArrayList<Ticket>()
-                for (i in 0 until ticketsArray.length()) {
-                    val ticket = ticketsArray.getJSONObject(i)
-                    ticketsList.add(Ticket(
-                        ticket.getInt("id"),
-                        ticket.getString("title"),
-                        ticket.getString("description"),
-                        ticket.getString("handled")
-                    ))
+        val jsonArrayRequest = object : JsonArrayRequest(
+            Request.Method.GET, url, null,
+            Response.Listener<JSONArray> { response ->
+                val ticketsList = mutableListOf<Ticket>()
+                for (i in 0 until response.length()) {
+                    val ticketJson = response.getJSONObject(i)
+                    val ticket = Ticket(
+                        ticketJson.getInt("id"),
+                        ticketJson.getString("title"),
+                        ticketJson.getString("description"),
+                        ticketJson.getString("handled")
+                    )
+                    ticketsList.add(ticket)
                 }
                 binding.recyclerViewTickets.adapter = TicketsAdapter(ticketsList)
             },
             Response.ErrorListener { error ->
-                Toast.makeText(context, "Erreur lors de la récupération des tickets!", Toast.LENGTH_LONG).show()
+                handleVolleyError(error)
             }
         ) {
             override fun getHeaders(): Map<String, String> {
-                val sharedPreferences = requireActivity().getSharedPreferences("AppPreferences", AppCompatActivity.MODE_PRIVATE)
-                val token = sharedPreferences.getString("AuthToken", "")
-                return mapOf("auth" to token!!)
+                return mapOf("auth" to token)
             }
         }
         queue.add(jsonArrayRequest)
+    }
+
+    private fun handleVolleyError(error: VolleyError) {
+        if (error.networkResponse?.statusCode == 401) {
+            redirectToLogin()
+        } else {
+            Toast.makeText(context, "Erreur réseau: ${error.message}", Toast.LENGTH_LONG).show()
+        }
     }
 }
