@@ -1,0 +1,4 @@
+<tech-list>
+    <tech>android.nfc.tech.Ndef</tech>
+    <!-- Ajoutez d'autres technologies NFC ici selon vos besoins -->
+</tech-list>
