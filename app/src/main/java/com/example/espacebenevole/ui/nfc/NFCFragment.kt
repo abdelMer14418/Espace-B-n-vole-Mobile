@@ -12,7 +12,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import com.android.volley.Request
+import com.android.volley.Response
+import com.android.volley.toolbox.StringRequest
+import com.android.volley.toolbox.Volley
 import com.example.espacebenevole.databinding.FragmentNfcBinding
+import org.json.JSONObject
 
 class NFCFragment : Fragment(), NfcAdapter.ReaderCallback {
 
@@ -32,7 +37,7 @@ class NFCFragment : Fragment(), NfcAdapter.ReaderCallback {
             if (beneficiaryId.isNotEmpty()) {
                 writeIdToTag(lastDetectedTag, beneficiaryId)
             } else {
-                Toast.makeText(context, "Please enter a valid ID.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Veuillez entrer un ID valide !", Toast.LENGTH_SHORT).show()
             }
         }
         return binding.root
@@ -41,11 +46,9 @@ class NFCFragment : Fragment(), NfcAdapter.ReaderCallback {
     private fun initNFC() {
         nfcAdapter = NfcAdapter.getDefaultAdapter(context)
         if (nfcAdapter == null) {
-            Toast.makeText(context, "NFC is not supported on this device.", Toast.LENGTH_LONG).show()
-            return
-        }
-        if (!nfcAdapter!!.isEnabled) {
-            Toast.makeText(context, "NFC is disabled.", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Le NFC n'est pas pris en charge sur cet appareil.", Toast.LENGTH_LONG).show()
+        } else if (!nfcAdapter!!.isEnabled) {
+            Toast.makeText(context, "Le NFC est désactivé.", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -61,39 +64,67 @@ class NFCFragment : Fragment(), NfcAdapter.ReaderCallback {
 
     override fun onTagDiscovered(tag: Tag?) {
         lastDetectedTag = tag
-        // Additional logic can be added here if needed
     }
 
     private fun writeIdToTag(tag: Tag?, id: String) {
         if (tag == null) {
-            Toast.makeText(context, "No NFC tag detected. Please approach a tag and try again.", Toast.LENGTH_LONG).show()
-            lastDetectedTag = null // Clear the last detected tag to prevent retries on an invalid tag
+            Toast.makeText(context, "Aucun tag NFC détecté. Veuillez approcher un tag et réessayer.", Toast.LENGTH_LONG).show()
+            lastDetectedTag = null
             return
         }
 
         val nfcData = Ndef.get(tag)
-        if (nfcData == null) {
-            Toast.makeText(context, "NFC is not NDEF.", Toast.LENGTH_LONG).show()
-            return
-        }
-
-        nfcData.use { ndef ->
+        nfcData?.use { ndef ->
             try {
                 ndef.connect()
                 if (ndef.isWritable) {
                     val record = NdefRecord.createTextRecord("en", id)
                     val message = NdefMessage(arrayOf(record))
                     ndef.writeNdefMessage(message)
-                    Toast.makeText(context, "ID written to tag successfully: $id", Toast.LENGTH_LONG).show()
+                    sendVisitRegistration(id)
                 } else {
-                    Toast.makeText(context, "NFC tag is read-only.", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, "Le tag NFC est en lecture seule.", Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(context, "Failed to write to NFC tag: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "Échec de l'écriture sur le tag NFC : ${e.localizedMessage}", Toast.LENGTH_LONG).show()
             } finally {
                 ndef.close()
             }
         }
+    }
+
+    private fun sendVisitRegistration(beneficiaryId: String) {
+        val queue = Volley.newRequestQueue(context)
+        val url = "https://projet-annuel-paoli.koyeb.app/api/index.php/volunteer/visits"
+
+        val jsonBody = JSONObject().apply {
+            put("id", beneficiaryId)
+        }
+
+        val stringRequest = object : StringRequest(
+            Request.Method.POST, url,
+            Response.Listener<String> {
+                Toast.makeText(context, "Visite bien enregistrée!", Toast.LENGTH_SHORT).show()
+            },
+            Response.ErrorListener {
+                Toast.makeText(context, "Erreur d'enregistrement de la visite!", Toast.LENGTH_LONG).show()
+            }
+        ) {
+            override fun getHeaders(): Map<String, String> {
+                val sharedPreferences = requireActivity().getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+                val token = sharedPreferences.getString("AuthToken", "")
+                return mapOf("auth" to token!!, "Content-Type" to "application/json")
+            }
+
+            override fun getBodyContentType(): String {
+                return "application/json; charset=utf-8"
+            }
+
+            override fun getBody(): ByteArray {
+                return jsonBody.toString().toByteArray(Charsets.UTF_8)
+            }
+        }
+        queue.add(stringRequest)
     }
 
     override fun onDestroyView() {
