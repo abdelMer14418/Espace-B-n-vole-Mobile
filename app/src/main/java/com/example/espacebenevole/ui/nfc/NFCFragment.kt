@@ -28,7 +28,12 @@ class NFCFragment : Fragment(), NfcAdapter.ReaderCallback {
         _binding = FragmentNfcBinding.inflate(inflater, container, false)
         initNFC()
         binding.writeButton.setOnClickListener {
-            writeIdToTag(lastDetectedTag)
+            val beneficiaryId = binding.editTextBeneficiaryId.text.toString()
+            if (beneficiaryId.isNotEmpty()) {
+                writeIdToTag(lastDetectedTag, beneficiaryId)
+            } else {
+                Toast.makeText(context, "Please enter a valid ID.", Toast.LENGTH_SHORT).show()
+            }
         }
         return binding.root
     }
@@ -54,19 +59,10 @@ class NFCFragment : Fragment(), NfcAdapter.ReaderCallback {
 
     override fun onTagDiscovered(tag: Tag?) {
         lastDetectedTag = tag
-        val ndef = Ndef.get(tag)
-        ndef?.connect()
-        val message = ndef.ndefMessage?.records?.joinToString(separator = "\n") { record ->
-            String(record.payload)
-        } ?: "Empty Tag"
-        ndef?.close()
-
-        activity?.runOnUiThread {
-            Toast.makeText(context, "Read from NFC Tag:\n$message", Toast.LENGTH_LONG).show()
-        }
+        // Handle any additional tag discovery logic if necessary
     }
 
-    private fun writeIdToTag(tag: Tag?, id: String = "id=1") {
+    private fun writeIdToTag(tag: Tag?, id: String) {
         if (tag == null) {
             Toast.makeText(context, "No NFC tag detected.", Toast.LENGTH_LONG).show()
             return
@@ -84,7 +80,7 @@ class NFCFragment : Fragment(), NfcAdapter.ReaderCallback {
                 val record = NdefRecord.createTextRecord("en", id)
                 val message = NdefMessage(arrayOf(record))
                 ndef.writeNdefMessage(message)
-                Toast.makeText(context, "ID written to tag successfully.", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "ID written to tag successfully: $id", Toast.LENGTH_LONG).show()
             } else {
                 Toast.makeText(context, "NFC tag is read-only.", Toast.LENGTH_LONG).show()
             }
