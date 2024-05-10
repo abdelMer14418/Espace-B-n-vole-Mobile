@@ -16,9 +16,9 @@ import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.example.espacebenevole.LoginActivity
-import com.example.espacebenevole.databinding.FragmentSlideshowBinding
 import com.example.espacebenevole.Ticket
 import com.example.espacebenevole.TicketsAdapter
+import com.example.espacebenevole.databinding.FragmentSlideshowBinding
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -33,6 +33,7 @@ class SlideshowFragment : Fragment() {
     ): View {
         _binding = FragmentSlideshowBinding.inflate(inflater, container, false)
         binding.recyclerViewTickets.layoutManager = LinearLayoutManager(context)
+        binding.recyclerViewTickets.adapter = TicketsAdapter(mutableListOf())
 
         binding.buttonSubmit.setOnClickListener {
             submitTicket()
@@ -67,8 +68,7 @@ class SlideshowFragment : Fragment() {
 
     private fun redirectToLogin() {
         Toast.makeText(requireContext(), "Votre session s'est expirée, veuillez vous reconnecter!", Toast.LENGTH_LONG).show()
-        val intent = Intent(activity, LoginActivity::class.java)
-        startActivity(intent)
+        startActivity(Intent(activity, LoginActivity::class.java))
         activity?.finish()
     }
 
@@ -99,8 +99,8 @@ class SlideshowFragment : Fragment() {
             Request.Method.POST, url,
             Response.Listener<String> { response ->
                 Toast.makeText(context, "Ticket envoyé avec succès!", Toast.LENGTH_SHORT).show()
-                binding.editTextTitle.text?.clear()
-                binding.editTextDescription.text?.clear()
+                binding.editTextTitle.setText("")
+                binding.editTextDescription.setText("")
                 fetchTickets(token)
             },
             Response.ErrorListener { error ->
@@ -140,7 +140,7 @@ class SlideshowFragment : Fragment() {
                     )
                     ticketsList.add(ticket)
                 }
-                binding.recyclerViewTickets.adapter = TicketsAdapter(ticketsList)
+                (binding.recyclerViewTickets.adapter as TicketsAdapter).updateTickets(ticketsList)
             },
             Response.ErrorListener { error ->
                 handleVolleyError(error)

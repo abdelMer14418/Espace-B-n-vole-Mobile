@@ -6,7 +6,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-class TicketsAdapter(private val tickets: List<Ticket>) : RecyclerView.Adapter<TicketsAdapter.TicketViewHolder>() {
+class TicketsAdapter(private var tickets: MutableList<Ticket>) : RecyclerView.Adapter<TicketsAdapter.TicketViewHolder>() {
 
     class TicketViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val textViewTitle: TextView = view.findViewById(R.id.textViewTitle)
@@ -27,4 +27,10 @@ class TicketsAdapter(private val tickets: List<Ticket>) : RecyclerView.Adapter<T
     }
 
     override fun getItemCount() = tickets.size
+
+    fun updateTickets(newTickets: List<Ticket>) {
+        tickets.clear()
+        tickets.addAll(newTickets)
+        notifyDataSetChanged()
+    }
 }
