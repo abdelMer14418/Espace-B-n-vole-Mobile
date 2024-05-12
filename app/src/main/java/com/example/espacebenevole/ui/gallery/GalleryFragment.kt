@@ -64,12 +64,17 @@ class GalleryFragment : Fragment() {
     }
 
     private fun getToken(): String? {
-        val sharedPreferences = requireActivity().getSharedPreferences("AppPreferences", AppCompatActivity.MODE_PRIVATE)
+        val sharedPreferences =
+            requireActivity().getSharedPreferences("AppPreferences", AppCompatActivity.MODE_PRIVATE)
         return sharedPreferences.getString("AuthToken", null)
     }
 
     private fun redirectToLogin() {
-        Toast.makeText(requireContext(), "Votre session s'est expirée, veuillez vous reconnecter!", Toast.LENGTH_LONG).show()
+        Toast.makeText(
+            requireContext(),
+            "Votre session s'est expirée, veuillez vous reconnecter!",
+            Toast.LENGTH_LONG
+        ).show()
         val intent = Intent(activity, LoginActivity::class.java)
         startActivity(intent)
         activity?.finish()
@@ -144,8 +149,12 @@ class GalleryFragment : Fragment() {
 
     private fun displayEventDetails(date: CalendarDay) {
         val eventsOnThisDay = eventsList.filter {
-            val startDate = LocalDate.parse(it.startDate, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")).atStartOfDay().toLocalDate()
-            val endDate = LocalDate.parse(it.endDate, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")).atStartOfDay().toLocalDate()
+            val startDate =
+                LocalDate.parse(it.startDate, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                    .atStartOfDay().toLocalDate()
+            val endDate =
+                LocalDate.parse(it.endDate, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                    .atStartOfDay().toLocalDate()
             date.date.isAfter(startDate.minusDays(1)) && date.date.isBefore(endDate.plusDays(1))
         }
 
@@ -191,13 +200,19 @@ class GalleryFragment : Fragment() {
         }
     }
 
-    inner class EventDecorator(private val startDate: LocalDate, private val endDate: LocalDate) : DayViewDecorator {
+    inner class EventDecorator(private val startDate: LocalDate, private val endDate: LocalDate) :
+        DayViewDecorator {
         override fun shouldDecorate(day: CalendarDay): Boolean {
             return day.date in startDate..endDate
         }
 
         override fun decorate(view: DayViewFacade) {
-            view.addSpan(DotSpan(5f, ContextCompat.getColor(requireContext(), android.R.color.holo_red_dark)))
+            view.addSpan(
+                DotSpan(
+                    5f,
+                    ContextCompat.getColor(requireContext(), android.R.color.holo_red_dark)
+                )
+            )
         }
     }
 
@@ -205,15 +220,61 @@ class GalleryFragment : Fragment() {
         val list = mutableListOf<Event>()
         for (i in 0 until length()) {
             val jsonObject = getJSONObject(i)
-            list.add(
-                Event(
-                    id = jsonObject.getInt("id"),
-                    title = jsonObject.getString("title"),
-                    startDate = jsonObject.getString("startDate"),
-                    endDate = jsonObject.getString("endDate"),
-                    address = jsonObject.getString("address")
-                )
-            )
+            val type = jsonObject.getString("type")
+            when (type) {
+                "activity" -> {
+
+                    list.add(
+                        Event(
+                            id = jsonObject.getInt("id"),
+                            title = jsonObject.getString("title"),
+                            startDate = jsonObject.optString("startDate", "2024-05-13 12:00:00"),
+                            endDate = jsonObject.optString("endDate", "2024-05-13 12:00:00"),
+                            address = jsonObject.optString("address", "address")
+                        )
+                    )
+
+                }
+
+                "lesson" -> {
+
+                    list.add(
+                        Event(
+                            id = jsonObject.getInt("id"),
+                            title = jsonObject.getString("subject"),
+                            startDate = jsonObject.optString("startDate", "2024-05-13 12:00:00"),
+                            endDate = jsonObject.optString("endDate", "2024-05-13 12:00:00"),
+                            address = jsonObject.optString("address", "address")
+                        )
+                    )
+
+                }
+
+                "patrol" -> {
+
+                    list.add(
+                        Event(
+                            id = jsonObject.getInt("id"),
+                            title = "Maraude",
+                            startDate = jsonObject.optString("startDate", "2024-05-13-12:00:00"),
+                            endDate = jsonObject.optString("startDate","2024-05-13-12:00:00"),
+                            address = ""
+                        )
+                    )
+
+                }
+                "collect"->{
+                    list.add(
+                        Event(
+                            id = jsonObject.getInt("id"),
+                            title = "Collecte",
+                            startDate = jsonObject.optString("date", "2024-05-13-12:00:00"),
+                            endDate = jsonObject.optString("date","2024-05-13-12:00:00"),
+                            address = ""
+                        )
+                    )
+                }
+            }
         }
         return list
     }

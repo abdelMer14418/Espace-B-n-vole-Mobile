@@ -33,15 +33,59 @@ fun JSONArray.toEventList(): List<Event> {
     val list = mutableListOf<Event>()
     for (i in 0 until length()) {
         val jsonObject = getJSONObject(i)
-        list.add(
-            Event(
-                id = jsonObject.getInt("id"),
-                title = jsonObject.getString("title"),
-                startDate = jsonObject.getString("startDate"),
-                endDate = jsonObject.getString("endDate"),
-                address = jsonObject.getString("address")
-            )
-        )
+        val type = jsonObject.getString("type")
+        when (type) {
+            "activity" -> {
+
+                list.add(
+                    Event(
+                        id = jsonObject.getInt("id"),
+                        title = jsonObject.getString("title"),
+                        startDate = jsonObject.optString("startDate", "2024-05-13 12:00:00"),
+                        endDate = jsonObject.optString("endDate", "2024-05-13 12:00:00"),
+                        address = jsonObject.optString("address", "address")
+                    )
+                )
+
+            }
+            "lesson"->{
+
+                list.add(
+                    Event(
+                        id = jsonObject.getInt("id"),
+                        title = jsonObject.getString("subject"),
+                        startDate = jsonObject.optString("startDate", "2024-05-13 12:00:00"),
+                        endDate = jsonObject.optString("endDate", "2024-05-13 12:00:00"),
+                        address = jsonObject.optString("address", "address")
+                    )
+                )
+
+            }
+            "patrol"->{
+
+                list.add(
+                    Event(
+                        id = jsonObject.getInt("id"),
+                        title = "Maraude",
+                        startDate = jsonObject.optString("startDate", "2024-05-13-12:00:00"),
+                        endDate = jsonObject.optString("startDate","2024-05-13-12:00:00"),
+                        address = ""
+                    )
+                )
+
+            }
+            "collect"->{
+                list.add(
+                    Event(
+                        id = jsonObject.getInt("id"),
+                        title = "Collecte",
+                        startDate = jsonObject.optString("date", "2024-05-13-12:00:00"),
+                        endDate = jsonObject.optString("date","2024-05-13-12:00:00"),
+                        address = ""
+                    )
+                )
+            }
+        }
     }
     return list
 }
@@ -70,12 +114,17 @@ class HomeFragment : Fragment() {
     }
 
     private fun getToken(): String? {
-        val sharedPreferences = requireActivity().getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+        val sharedPreferences =
+            requireActivity().getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
         return sharedPreferences.getString("AuthToken", null)
     }
 
     private fun redirectToLogin() {
-        Toast.makeText(requireContext(), "Votre session s'est expirée, veuillez vous reconnecter!", Toast.LENGTH_LONG).show()
+        Toast.makeText(
+            requireContext(),
+            "Votre session s'est expirée, veuillez vous reconnecter!",
+            Toast.LENGTH_LONG
+        ).show()
         // Handle redirection to login; possibly via Navigation Component or starting a new Activity
         val intent = Intent(activity, LoginActivity::class.java)
         startActivity(intent)
@@ -101,18 +150,19 @@ class HomeFragment : Fragment() {
                 val publicEvents = responsePublic.toEventList()
 
                 // Requête pour les événements enregistrés avec en-tête d'authentification correct
-                val registeredEventsRequest = object : JsonArrayRequest(Method.GET, urlRegistered, null,
-                    Response.Listener<JSONArray> { responseRegistered ->
-                        val registeredEvents = responseRegistered.toEventList()
-                        updateEventsPage(publicEvents, registeredEvents)
-                    },
-                    Response.ErrorListener { error ->
-                        handleVolleyError(error)
-                    }) {
-                    override fun getHeaders(): Map<String, String> {
-                        return mapOf("auth" to token)
+                val registeredEventsRequest =
+                    object : JsonArrayRequest(Method.GET, urlRegistered, null,
+                        Response.Listener<JSONArray> { responseRegistered ->
+                            val registeredEvents = responseRegistered.toEventList()
+                            updateEventsPage(publicEvents, registeredEvents)
+                        },
+                        Response.ErrorListener { error ->
+                            handleVolleyError(error)
+                        }) {
+                        override fun getHeaders(): Map<String, String> {
+                            return mapOf("auth" to token)
+                        }
                     }
-                }
                 queue.add(registeredEventsRequest)
             },
             Response.ErrorListener { error ->
@@ -127,9 +177,10 @@ class HomeFragment : Fragment() {
         container.removeAllViews()
 
         publicEvents?.forEach { event ->
-            val eventView = LayoutInflater.from(context).inflate(R.layout.event_card, container, false)
+            val eventView =
+                LayoutInflater.from(context).inflate(R.layout.event_card, container, false)
             val buttonParticipate = eventView.findViewById<Button>(R.id.buttonParticipate)
-            val isRegistered = registeredEvents?.any { it.id == event.id } ?: false
+            val isRegistered = registeredEvents?.any { it.id == event.id && it.title == event.title } ?: false
 
             eventView.findViewById<TextView>(R.id.activityName).text = event.title
             eventView.findViewById<TextView>(R.id.activityStart).text = "Début : ${event.startDate}"
@@ -155,7 +206,8 @@ class HomeFragment : Fragment() {
             return
         }
 
-        val url = "https://projet-annuel-paoli.koyeb.app/api/index.php/volunteer/activities/$eventId/register"
+        val url =
+            "https://projet-annuel-paoli.koyeb.app/api/index.php/volunteer/activities/$eventId/register"
         val stringRequest = object : StringRequest(
             Request.Method.GET, url,
             Response.Listener<String> {
