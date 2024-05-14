@@ -22,4 +22,13 @@
     <style name="Theme.EspaceBenevole.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <style name="Theme.EspaceBenevole.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    <style name="CardStyle">
+        <item name="android:background">@color/white</item>
+        <item name="android:layout_margin">8dp</item>
+        <item name="android:padding">16dp</item>
+        <item name="android:elevation">4dp</item>
+    </style>
+
+
 </resources>

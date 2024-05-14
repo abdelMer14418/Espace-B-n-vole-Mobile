@@ -4,7 +4,8 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:gravity="center_vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    style="@style/CardStyle"> <!-- Applique le style ici -->
 
     <TextView
         android:id="@+id/textViewTitle"
@@ -26,3 +27,4 @@
         android:textSize="16sp"
         android:textStyle="italic" />
 </LinearLayout>
+
