@@ -23,7 +23,7 @@ class TicketsAdapter(private var tickets: MutableList<Ticket>) : RecyclerView.Ad
         val ticket = tickets[position]
         holder.textViewTitle.text = ticket.title
         holder.textViewDescription.text = ticket.description
-        holder.textViewStatus.text = ticket.status
+        holder.textViewStatus.text = if(ticket.status=="true") "Validé" else "En attente"
     }
 
     override fun getItemCount() = tickets.size
