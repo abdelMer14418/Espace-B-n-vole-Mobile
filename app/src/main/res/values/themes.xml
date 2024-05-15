@@ -24,7 +24,8 @@
     <style name="Theme.EspaceBenevole.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
     <style name="CardStyle">
-        <item name="android:background">@color/white</item>
+        <item name="android:background">@color/pistachio</item>
+
         <item name="android:layout_margin">8dp</item>
         <item name="android:padding">16dp</item>
         <item name="android:elevation">4dp</item>

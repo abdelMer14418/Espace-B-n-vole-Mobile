@@ -26,7 +26,7 @@ class LoginActivity : AppCompatActivity() {
             if (email.isNotEmpty() && password.isNotEmpty()) {
                 loginUser(email, password)
             } else {
-                Toast.makeText(this, "Please enter email and password", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Veuillez entrer l'email et le mot de passe", Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -57,7 +57,7 @@ class LoginActivity : AppCompatActivity() {
                 }
             },
             Response.ErrorListener { error ->
-                Toast.makeText(this, "Volley error: ${error.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Mot de passe ou adresse mail incorrecte", Toast.LENGTH_SHORT).show()
             }
         ) {
             override fun getBodyContentType(): String {
